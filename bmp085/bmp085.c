@@ -8,12 +8,11 @@
  *
  * @date    23 June 2016
  *
- * TODO: 
- *        - Calculate the altitude
+ * TODO:    Add the Calcul of the altitude.
  */
 
 /*==========================================================================*/
-/* Include file.                                                            */
+/* Include files.                                                           */
 /*==========================================================================*/
 
 /* Driver file. */
@@ -22,6 +21,8 @@
 /*==========================================================================*/
 /* Driver global varaibles.                                                 */
 /*==========================================================================*/
+
+// TODO: Avoid global variriables in drivers implementation.
 
 static bmp085_calib_data_t bmp085_calib_data;
 

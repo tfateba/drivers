@@ -10,12 +10,15 @@
  * @date    23 June 2016
  *
  */
+
 #ifndef BMP085_H
 #define BMP085_H
 
 /*==========================================================================*/
 /* Include files.                                                           */
 /*==========================================================================*/
+
+/* Driver files. */
 #include "iic.h"
 
 /*==========================================================================*/
@@ -134,7 +137,7 @@ typedef struct bmp085_eprom{
 msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t bmp085Addr);
 msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp);
 msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
-    float *press);
+                      float *press);
 
 #endif /* BMP085_H */
 
