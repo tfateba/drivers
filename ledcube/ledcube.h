@@ -2,7 +2,7 @@
  *
  * @file    ledcube.h
  *
- * @brief   Led cube header file.
+ * @brief   Led cube driver header file.
  *
  * @author  Theodore Ateba, tf.ateba@gmail.com
  *
