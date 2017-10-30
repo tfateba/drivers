@@ -36,7 +36,7 @@ msg_t i2cReadRegister(I2CDriver *i2cp, uint8_t sad, uint8_t *reg,
   msg_t msg;
 
   i2cAcquireBus(i2cp);
-  msg = i2cMasterTransmitTimeout(i2cp, sad, reg, 1, rxbuf, 1, MS2ST(4));
+  msg = i2cMasterTransmitTimeout(i2cp, sad, reg, 1, rxbuf, 1, MS2ST(4)); // TODO: Test the usage of TIMEINFINITE
   i2cReleaseBus(i2cp);
 
   return msg;
@@ -80,7 +80,7 @@ msg_t i2cWriteRegisters(I2CDriver *i2cp, uint8_t sad, uint8_t *txbuf,
   msg_t msg;
 
   i2cAcquireBus(i2cp);
-  msg = i2cMasterTransmitTimeout(i2cp, sad, txbuf, lenght, NULL, 0, MS2ST(4));
+  msg = i2cMasterTransmitTimeout(i2cp, sad, txbuf, lenght, NULL, 0, MS2ST(4)); // TODO: Test the usage of TIMEINFINITE
   i2cReleaseBus(i2cp);
 
   return msg;
