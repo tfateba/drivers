@@ -134,10 +134,12 @@ typedef struct bmp085_eprom{
 /* Driver functions prototypes.                                             */
 /*==========================================================================*/
 
-msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t bmp085Addr);
-msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp);
-msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
-                      float *press);
+msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t addr);
+msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t addr, float *temp);
+msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t addr, uint8_t oss, float *press);
+msg_t bmp085GetAltitude(I2CDriver *i2cp, uint8_t addr, float *altitude);
+msg_t bmp085GetPressureAtSeaLevel(I2CDriver *i2cp, uint8_t addr,
+                                  float *presssealevel);
 
 #endif /* BMP085_H */
 

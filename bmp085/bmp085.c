@@ -8,12 +8,16 @@
  *
  * @date    23 June 2016
  *
- * TODO:    Add the Calcul of the altitude.
  */
 
 /*==========================================================================*/
 /* Include files.                                                           */
 /*==========================================================================*/
+
+/* Standard files. */
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /* Driver file. */
 #include "bmp085.h"
@@ -25,6 +29,8 @@
 // TODO: Avoid global variriables in drivers implementation.
 
 static bmp085_calib_data_t bmp085_calib_data;
+const float sealevelpress = 1013.25;  /**< Sea level pressure (hpa).  */
+const float absaltitude   = 0;        /**< Absolute altitude.         */
 
 /*==========================================================================*/
 /* Driver Functions.                                                        */
@@ -73,18 +79,18 @@ static uint8_t getPressureConversionTime(uint8_t oss) {
 /**
  * @brief   Read BMP085 calibration data.
  *
- * @param[in] i2cp        pointer to the I2C device
- * @param[in] bmp085Addr  bmpO85 digital pressure sensor address
- * @return    msg         the result of the calibration data reading operation
+ * @param[in] i2cp  pointer to the I2C device
+ * @param[in] addr  bmpO85 digital pressure sensor address
+ * @return    msg   the result of the calibration data reading operation
  */
-msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t bmp085Addr) {
+msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t addr) {
 
   uint8_t txbuf;
   uint8_t rxbuf[22];
   msg_t   msg;
 
   txbuf = BMP085_CALIBRATION_DATA_AC1_MSB;
-  msg = i2cReadRegisters(i2cp, bmp085Addr, &txbuf, rxbuf, 22);
+  msg = i2cReadRegisters(i2cp, addr, &txbuf, rxbuf, 22);
 
   if (msg == MSG_OK) {
     bmp085_calib_data.ac1 = ((rxbuf[0]  << 8) | rxbuf[1]);
@@ -108,12 +114,12 @@ msg_t bmp085GetCalibrationData(I2CDriver *i2cp, uint8_t bmp085Addr) {
 /**
  * @brief   Read temperature from the digital pressure sensor.
  *
- * @param[in] i2cp        pointer to the I2C device
- * @param[in] bmp085Addr  the bmp085 digital pressure sensor address
- * @param[in] temp        tointer to the temperature variable
- * @return    msg         the result of the temperature reading operation
+ * @param[in] i2cp  pointer to the I2C device
+ * @param[in] addr  the bmp085 digital pressure sensor address
+ * @param[in] temp  tointer to the temperature variable
+ * @return    msg   the result of the temperature reading operation
  */
-msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp) {
+msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t addr, float *temp) {
 
   int32_t utemp;
   int32_t x1,x2;
@@ -124,7 +130,7 @@ msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp) {
 
   txbuf[0] = BMP085_CR;
   txbuf[1] = BMP085_MODE_TEMP;
-  msg = i2cWriteRegisters(i2cp, bmp085Addr, txbuf, 2);
+  msg = i2cWriteRegisters(i2cp, addr, txbuf, 2);
 
   if (msg != MSG_OK)
     return msg;
@@ -132,7 +138,7 @@ msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp) {
   chThdSleepMilliseconds(5);
 
   txbuf[0] = BMP085_DATA;
-  msg = i2cReadRegisters(i2cp, bmp085Addr, txbuf, rxbuf, 2);
+  msg = i2cReadRegisters(i2cp, addr, txbuf, rxbuf, 2);
 
   if (msg == MSG_OK) {
     /* Building value. */
@@ -155,13 +161,13 @@ msg_t bmp085ReadTemp(I2CDriver *i2cp, uint8_t bmp085Addr, float *temp) {
 /**
  * @brief   Read pressure with I2C interface of the digital pressure sensor.
  *
- * @param[in] i2cp        pointer to the I2C device
- * @param[in] bmp085Addr  bmp085 digital pressure sensor address
- * @param[in] oss         oversampling setting parameter
- * @param[in] press       pointer to the pressure variable
- * @return    pressure    result of the pressure reading operation
+ * @param[in]   i2cp        pointer to the I2C device
+ * @param[in]   addr        bmp085 digital pressure sensor address
+ * @param[in]   oss         oversampling setting parameter
+ * @param[out]  press       pointer to the pressure variable
+ * @return      msg         result of the pressure reading operation
  */
-msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
+msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t addr, uint8_t oss,
                       float *press) {
 
   int32_t   upress;
@@ -184,7 +190,7 @@ msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
   else
     txbuf[1] = BMP085_MODE_PR3 + (oss << 6);
 
-  msg = i2cWriteRegisters(i2cp, bmp085Addr, txbuf, 2);
+  msg = i2cWriteRegisters(i2cp, addr, txbuf, 2);
 
   if (msg != MSG_OK)
     return msg;
@@ -194,7 +200,7 @@ msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
 
   txbuf[0] = BMP085_DATA;
 
-  msg = i2cReadRegisters(i2cp, bmp085Addr, txbuf, rxbuf, 3);
+  msg = i2cReadRegisters(i2cp, addr, txbuf, rxbuf, 3);
 
   if (msg == MSG_OK) {
     /*  Building value. */
@@ -229,5 +235,47 @@ msg_t bmp085ReadPress(I2CDriver *i2cp, uint8_t bmp085Addr, uint8_t oss,
   }
   else
     return msg;
+}
+
+/**
+ * @brief   Read the altitude measured by the sensor.
+ *
+ * @param[in]   i2cp      pointer to the I2C device
+ * @param[in]   addr      bmp085 digital pressure sensor address
+ * @param[out]  altitude  pointer to the pressure variable
+ * @return      msg       result of the altitude reading operation
+ */
+msg_t bmp085GetAltitude(I2CDriver *i2cp, uint8_t addr, float *altitude) {
+
+  float press;
+  msg_t msg;
+
+  msg = bmp085ReadPress(i2cp, addr, BMP085_ULTRA_HIGH_RESOLUTION, &press);
+  *altitude = 44330 * (1 - (pow((press / sealevelpress), 0.191)));
+
+  return msg;
+}
+
+/**
+ * @brief   Read pressure at sea level with the sensor.
+ *
+ * @param[in]   i2cp            pointer to the I2C device
+ * @param[in]   addr            bmp085 digital pressure sensor address
+ * @param[out]  presssealevel   pointer to the pressure variable
+ * @return      msg             result of the pressure reading operation
+ */
+msg_t bmp085GetPressureAtSeaLevel(I2CDriver *i2cp, uint8_t addr,
+                                  float *presssealevel) {
+
+  float altitude;
+  float press;
+  msg_t msg;
+
+  msg = bmp085GetAltitude(i2cp, addr, &altitude);
+  msg = bmp085ReadPress(i2cp, addr, BMP085_ULTRA_HIGH_RESOLUTION, &press);
+
+  *presssealevel = (press / (pow((1 - (absaltitude / 44330)), 5.225)));
+
+  return msg;
 }
 
