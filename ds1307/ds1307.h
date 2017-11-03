@@ -24,16 +24,11 @@
 #include "ch.h"
 #include "hal.h"
 
-/* Driver files. */
-#include "iic.h"
-
 /*==========================================================================*/
 /* Driver macro.                                                            */
 /*==========================================================================*/
 
-#define DS1307_RX_DEPTH       7 /**< Size of the data received from the RTC.  */ // TODO: Delete this
-#define DS1307_TX_DEPTH       8 /**< Size of the data transmit to the RTC.    */ // TODO remove this
-#define DS1307_MAX_DATA_SIZE  8 /**< Size of the data transmit to the RTC.    */
+#define DS1307_MAX_DATA_SIZE  8 /**< Size of the data transmit to the RTC.  */
 
 #define DS1307_ADDRESS      0x68 /**< RTC Address.                          */
 #define DS1307_SECONDS_REG  0x00 /**< RTC register containing the seconds.  */
@@ -56,13 +51,9 @@ typedef struct ds1307_data {
 }ds1307_data_t;
 
 typedef struct rtcDriver {
-  uint8_t   buf[DS1307_MAX_DATA_SIZE]; /**< RTC buffer of exchangeable data.*/
-  //ds1307_data_t setData; /* structure used to configure the RTC. */
-  //ds1307_data_t getData; /* structure used to read the RTC. */
-  
-  uint8_t       rxbuf[DS1307_RX_DEPTH]; /**< RTC reception data.             */
-  uint8_t       txbuf[DS1307_TX_DEPTH]; /**< RTC transmission data.          */
-  i2cflags_t    errors = 0;
+  uint8_t       rxbuf[DS1307_MAX_DATA_SIZE - 1]; /**< RTC reception data.   */
+  uint8_t       txbuf[DS1307_MAX_DATA_SIZE];     /**< RTC transmission data.*/
+  i2cflags_t    errors;
 
   ds1307_data_t rtc;
   uint16_t      refYear;  /**< RTC reference year.  */
@@ -73,6 +64,7 @@ typedef struct rtcDriver {
 
 //typedef struct ds1307_t rtcDriver;
 //rtcDriver_t rtcDriver;
+//rtcDriver_t calendar;
 
 /*==========================================================================*/
 /* Driver functions prototypes.                                             */
