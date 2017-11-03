@@ -19,17 +19,6 @@
 #include "iic.h"
 
 /*==========================================================================*/
-/* Global variables.                                                        */
-/*==========================================================================*/
-
-/* TODO: Avoid the global variables for the device driver, the variable bellow must be part of the driver. */
-
-static uint8_t rxbuf[DS1307_RX_DEPTH]; /**< RTC reception data.             */
-static uint8_t txbuf[DS1307_TX_DEPTH]; /**< RTC transmission data.          */
-
-static i2cflags_t errors = 0;
-
-/*==========================================================================*/
 /* Configuration structure.                                                 */
 /*==========================================================================*/
 
@@ -126,16 +115,17 @@ void ds1307SetClock(rtcDriver_t *rtcp) {
 
   msg_t msg;
 
-  txbuf[0] = DS1307_SECONDS_REG;
-  txbuf[1] = dec2Bcd(rtcp->rtc.seconds);
-  txbuf[2] = dec2Bcd(rtcp->rtc.minutes);
-  txbuf[3] = dec2Bcd(rtcp->rtc.hours);
-  txbuf[4] = dec2Bcd(rtcp->rtc.day);
-  txbuf[5] = dec2Bcd(rtcp->rtc.date);
-  txbuf[6] = dec2Bcd(rtcp->rtc.month);
-  txbuf[7] = dec2Bcd(rtcp->rtc.year - rtcp->refYear);
+  rtcp->txbuf[0] = DS1307_SECONDS_REG;
+  rtcp->txbuf[1] = dec2Bcd(rtcp->rtc.seconds);
+  rtcp->txbuf[2] = dec2Bcd(rtcp->rtc.minutes);
+  rtcp->txbuf[3] = dec2Bcd(rtcp->rtc.hours);
+  rtcp->txbuf[4] = dec2Bcd(rtcp->rtc.day);
+  rtcp->txbuf[5] = dec2Bcd(rtcp->rtc.date);
+  rtcp->txbuf[6] = dec2Bcd(rtcp->rtc.month);
+  rtcp->txbuf[7] = dec2Bcd(rtcp->rtc.year - rtcp->refYear);
 
-  msg = i2cWriteRegisters(&I2CD1, DS1307_ADDRESS, txbuf, DS1307_TX_DEPTH);
+  msg = i2cWriteRegisters(&I2CD1, DS1307_ADDRESS, rtcp->txbuf,
+                          DS1307_MAX_DATA_SIZE);
 
   if (msg != MSG_OK)
     print("\n\r Error when setting the DS1307 date over the I2C bus.");
@@ -176,23 +166,23 @@ void ds1307GetClock(rtcDriver_t *rtcp) {
 
   msg_t msg;
 
-  txbuf[0] = DS1307_SECONDS_REG; // Register address of the Seconds
+  rtcp->txbuf[0] = DS1307_SECONDS_REG; /* Register address of the Seconds. */
 
-  i2cReadRegisters(&I2CD1, DS1307_ADDRESS, txbuf, rxbuf, 7);
-  msg = i2cReadRegisters(&I2CD1, DS1307_ADDRESS, txbuf, rxbuf, 7);
+  msg = i2cReadRegisters(&I2CD1, DS1307_ADDRESS, rtcp->txbuf, rtcp->rxbuf,
+                         DS1307_MAX_DATA_SIZE - 1);
 
   if (msg != MSG_OK) {
-      errors = i2cGetErrors(&I2CD1);
+      rtcp->errors = i2cGetErrors(&I2CD1);
       print("\n\r I2C transmission error!");
   }
   else {
-    rtcp->rtc.seconds  = bcd2Dec(rxbuf[0] & 0x7F);
-    rtcp->rtc.minutes  = bcd2Dec(rxbuf[1]);
-    rtcp->rtc.hours    = bcd2Dec(rxbuf[2] & 0x3F );
-    rtcp->rtc.day      = bcd2Dec(rxbuf[3]);
-    rtcp->rtc.date     = bcd2Dec(rxbuf[4]);
-    rtcp->rtc.month    = bcd2Dec(rxbuf[5]);
-    rtcp->rtc.year     = bcd2Dec(rxbuf[6]) + rtcp->refYear;
+    rtcp->rtc.seconds  = bcd2Dec(rtcp->rxbuf[0] & 0x7F);
+    rtcp->rtc.minutes  = bcd2Dec(rtcp->rxbuf[1]);
+    rtcp->rtc.hours    = bcd2Dec(rtcp->rxbuf[2] & 0x3F );
+    rtcp->rtc.day      = bcd2Dec(rtcp->rxbuf[3]);
+    rtcp->rtc.date     = bcd2Dec(rtcp->rxbuf[4]);
+    rtcp->rtc.month    = bcd2Dec(rtcp->rxbuf[5]);
+    rtcp->rtc.year     = bcd2Dec(rtcp->rxbuf[6]) + rtcp->refYear;
   }
 }
 
